@@ -186,6 +186,7 @@
     var key = getParameterByName('key');
     loadJSON(function(data) {
       var decryptedData = decryptData(data, key);
+      console.log(decryptedData);
       displayInformation(decryptedData);
     });
   </script>
