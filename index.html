@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Affichage des Informations</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fernet@0.3.2/fernetBrowser.min.js"></script>
 </head>
 <body class="font-sans antialiased">
 
@@ -32,6 +32,27 @@
   </table>
 
   <script>
+    function decryptJSON(encryptedData) {
+      // Fonction pour récupérer la valeur d'un paramètre GET dans l'URL
+      function getParameterByName(name, url) {
+        if (!url) url = window.location.href;
+        name = name.replace(/[[\]]/g, '\\$&');
+        var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+            results = regex.exec(url);
+        if (!results) return null;
+        if (!results[2]) return '';
+        return decodeURIComponent(results[2].replace(/\+/g, ' '));
+      }
+
+      // Récupérer la clé du paramètre GET nommé "cle"
+      var key = getParameterByName('cle');
+      var secret = new fernet.Secret(key); // Utiliser la clé récupérée
+      // créer un objet token qui n'expire jamais
+      var token = new fernet.Token({secret: secret, token: encryptedData, ttl: 0});
+      var decryptedData = token.decode(encryptedData);
+      return JSON.parse(decryptedData);
+    }
+
     // Fonction pour charger le contenu du fichier JSON
     function loadJSON(callback) {
       var xobj = new XMLHttpRequest();
@@ -39,16 +60,10 @@
       xobj.open('GET', 'result.json', true);
       xobj.onreadystatechange = function () {
         if (xobj.readyState == 4 && xobj.status == "200") {
-          callback(JSON.parse(xobj.responseText));
+          callback(decryptJSON(xobj.responseText)); // Appeler la fonction pour décrypter les données JSON
         }
       };
       xobj.send(null);
-    }
-
-    // Fonction pour décrypter les données JSON
-    function decryptData(data, key) {
-      var decryptedData = CryptoJS.AES.decrypt(data, key).toString(CryptoJS.enc.Utf8);
-      return JSON.parse(decryptedData);
     }
 
     // Fonction pour afficher les informations avec pagination
@@ -94,7 +109,7 @@
                 var salleElement = document.createElement('tr');
                 salleElement.innerHTML = '<td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap bg-blue-100 border border-blue-50">' + salle.libelle + '</td>' +
                   '<td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap bg-blue-100 border border-blue-50">' + salle.etage + '</td>' +
-                  '<td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap bg-blue-100 border border-blue-50">' + getReservationsText(salle.reservations) + '</td>';
+                  '<td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap bg-blue-100 border border-blue-50 whitespace-pre-wrap">' + getReservationsText(salle.reservations) + '</td>';
                 document.getElementById('salles').appendChild(salleElement);
               }
             });
@@ -171,24 +186,9 @@
         ' - ' + endHour + 'h' + new Date(reservation['dateFin']).getMinutes();
     }
 
-    // Fonction pour extraire les paramètres de l'URL
-    function getParameterByName(name, url) {
-      if (!url) url = window.location.href;
-      name = name.replace(/[\[\]]/g, '\\$&');
-      var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
-          results = regex.exec(url);
-      if (!results) return null;
-      if (!results[2]) return '';
-      return decodeURIComponent(results[2].replace(/\+/g, ' '));
-    }
-
     // Appeler la fonction pour charger et afficher les informations
-    var key = getParameterByName('key');
-    loadJSON(function(data) {
-      var decryptedData = decryptData(data, key);
-      console.log(decryptedData);
-      displayInformation(decryptedData);
-    });
+    loadJSON(displayInformation);
+
   </script>
 
 </body>
