@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Affichage des Informations</title>
+  <link rel="stylesheet" href="style.css">
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/fernet@0.3.2/fernetBrowser.min.js"></script>
 </head>
@@ -11,20 +12,21 @@
 
   <!-- tableau dans lequel on ajoutera les infos des salles -->
   <table class="w-full h-screen text-2xl text-left text-gray-500 dark:text-gray-400">
-    <thead class="text-gray-700 uppercase dark:text-gray-400 text-[rem] leading-8">
+    <thead class="text-white uppercase dark:text-gray-400 text-[rem] leading-8">
     <tr>
-      <th scope="col" class="px-6 py-3 bg-blue-300 border border-blue-50">Salle</th>
-      <th scope="col" class="px-6 py-3 bg-blue-300 border border-blue-50">Étage</th>
-      <th scope="col" class="px-6 py-3 bg-blue-300 border border-blue-50">Formation</th>
+      <th scope="col" class="px-6 py-3 bg-cnfpt-primary-1 border border-blue-50">Salle</th>
+      <th scope="col" class="px-6 py-3 bg-cnfpt-primary-1 border border-blue-50">Étage</th>
+      <th scope="col" class="px-6 py-3 bg-cnfpt-primary-1 border border-blue-50">Formation</th>
+      <th scope="col" class="px-6 py-3 bg-cnfpt-primary-1 border border-blue-50">Intervenant</th>
     </tr>
     </thead>
     <tbody id="salles" class="text-[1.8rem] leading-8">
     </tbody>
-    <tfoot class="text-gray-700 dark:text-gray-400 text-2xl" style="height: 5%;">
+    <tfoot class="text-white dark:text-gray-400 text-2xl" style="height: 5%;">
         <tr>
-            <th colspan="4" class="px-6 py-3 bg-blue-300 w-full text-center">
-              <span class="text-red-600">WiFi : CNFPT_INVITES</span>
-              <img src="https://upload.wikimedia.org/wikipedia/fr/6/62/Logo_cnfpt.svg" style="margin-left: 2.4em;" class="inline-flex text-dark-50 float-left w-12">
+            <th colspan="4" class="px-6 py-3 bg-cnfpt-primary-1 w-full text-center">
+              <span class="text-cnfpt-secondary">WiFi : CNFPT_INVITES</span>
+              <img src="https://www.cnfpt.fr/assets/images/logo.svg" style="margin-left: 2.4em;  filter: brightness(0) invert(1);" class="inline-flex text-dark-50 float-left w-12">
               <span id="pagination" class="text-dark-50 float-right"></span>
             </th>
         </tr>
@@ -68,73 +70,85 @@
 
     // Fonction pour afficher les informations avec pagination
     function displayInformation(data) {
-      var jsonData = data;
+      var centre = data[0];
 
-      jsonData.centres.forEach(function (centre) {
-        var salles = centre.salles;
-        var pageCourante = 0;
+      var salles = centre.salles;
+      var pageCourante = 0;
 
-        switchPlanning(salles, pageCourante);
+      console.log(salles);
 
-        function switchPlanning(salles, pageCourante) {
-          let salleParPage = 8;
+      switchPlanning(salles, pageCourante);
 
-          if (salles.length > 8) {
-            salleParPage = Math.ceil(salles.length / 2);
-          } else {
-            salleParPage = salles.length;
-          }
+      function switchPlanning(salles, pageCourante) {
+        let salleParPage = 8;
 
-          let nombrePage = Math.ceil(salles.length / salleParPage);
-
-          if (salleParPage * nombrePage - salles.length != 0) {
-            let nbSalleRestante = salleParPage * nombrePage - salles.length;
-
-            if ((salleParPage + nbSalleRestante) > 8) {
-              salleParPage = salleParPage + nbSalleRestante;
-              nombrePage = Math.ceil(salles.length / salleParPage);
-            }
-          }
-
-          const setCurrentPage = (pageNum) => {
-            pageCourante = pageNum;
-
-            document.getElementById('salles').innerHTML = '';  // Réinitialiser le contenu du tableau
-
-            const prevRange = (pageNum - 1) * salleParPage;
-            const currRange = pageNum * salleParPage;
-
-            Array.from(salles).forEach((salle, index) => {
-              if (index >= prevRange && index < currRange) {
-                var salleElement = document.createElement('tr');
-                salleElement.innerHTML = '<td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap bg-blue-100 border border-blue-50">' + salle.libelle + '</td>' +
-                  '<td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap bg-blue-100 border border-blue-50">' + salle.etage + '</td>' +
-                  '<td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap bg-blue-100 border border-blue-50 whitespace-pre-wrap">' + getReservationsText(salle.reservations) + '</td>';
-                document.getElementById('salles').appendChild(salleElement);
-              }
-            });
-
-            let pagination = document.getElementById('pagination');
-            pagination.classList.add("position-absolute", "bottom-0", "end-0");
-            pagination.style.paddingRight = "2.6em";
-            pagination.style.paddingTop = "0.05em";
-            pagination.style.paddingBottom = "0.1em";
-            pagination.innerHTML= "PAGE " + pageCourante + "/" + nombrePage;
-          };
-
-          // Démarrer à la première page
-          setCurrentPage(1);
-
-          // Définir un délai pour passer à la page suivante
-          setInterval(() => {
-            if (pageCourante === nombrePage) {
-              setCurrentPage(1);
-            } else {
-              setCurrentPage(pageCourante + 1);
-            }
-          }, 9 * 1000);
+        if (salles.length > 8) {
+          salleParPage = Math.ceil(salles.length / 2);
+        } else {
+          salleParPage = salles.length;
         }
-      });
+
+        let nombrePage = Math.ceil(salles.length / salleParPage);
+
+        if (salleParPage * nombrePage - salles.length != 0) {
+          let nbSalleRestante = salleParPage * nombrePage - salles.length;
+
+          if ((salleParPage + nbSalleRestante) > 8) {
+            salleParPage = salleParPage + nbSalleRestante;
+            nombrePage = Math.ceil(salles.length / salleParPage);
+          }
+        }
+
+        const setCurrentPage = (pageNum) => {
+          pageCourante = pageNum;
+
+          document.getElementById('salles').innerHTML = '';  // Réinitialiser le contenu du tableau
+
+          const prevRange = (pageNum - 1) * salleParPage;
+          const currRange = pageNum * salleParPage;
+
+          Array.from(salles).forEach((salle, index) => {
+            if (index >= prevRange && index < currRange) {
+              var salleElement = document.createElement('tr');
+              salleElement.innerHTML = '<td class="px-6 py-4 font-bold font-medium text-black whitespace-nowrap bg-cnfpt-bleu border border-blue-50">' + salle.libelle + '</td>' +
+                '<td class="px-6 py-4 font-medium text-black font-bold whitespace-nowrap bg-cnfpt-bleu border border-blue-50">' + salle.etage + '</td>' +
+                '<td class="px-6 py-4 font-medium text-black whitespace-nowrap bg-cnfpt-bleu border border-blue-50 whitespace-pre-wrap font-bold">' + getReservationsText(salle.reservations) + '</td>';
+
+
+
+              Array.from(salle.reservations).forEach((reservation) => {
+                if (reservation.IdEtat === 3 && reservation.intervenants.length > 0 && reservation.intervenants[0].nom) {
+                  salleElement.innerHTML += '<td class="px-6 py-4 font-medium text-black whitespace-nowrap bg-cnfpt-bleu border border-blue-50">' + reservation.intervenants.map(intervenant => intervenant.nom + ' ' + intervenant.prenom).join(', ') + '</td>';
+                } else if(reservation.intervenant) {
+                  salleElement.innerHTML += '<td class="px-6 py-4 font-medium text-black whitespace-nowrap bg-cnfpt-bleu border border-blue-50">' + reservation.intervenant + '</td>';
+                }
+              });
+
+              document.getElementById('salles').appendChild(salleElement);
+            }
+          });
+
+          let pagination = document.getElementById('pagination');
+          pagination.classList.add("position-absolute", "bottom-0", "end-0");
+          pagination.style.paddingRight = "2.6em";
+          pagination.style.paddingTop = "0.05em";
+          pagination.style.paddingBottom = "0.1em";
+          pagination.innerHTML= "PAGE " + pageCourante + "/" + nombrePage;
+        };
+
+        // Démarrer à la première page
+        setCurrentPage(1);
+
+        // Définir un délai pour passer à la page suivante
+        setInterval(() => {
+          if (pageCourante === nombrePage) {
+            setCurrentPage(1);
+          } else {
+            setCurrentPage(pageCourante + 1);
+          }
+        }, 9 * 1000);
+      }
+
     }
 
     function getReservationsText(reservations) {
