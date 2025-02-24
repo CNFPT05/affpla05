@@ -115,6 +115,9 @@
                 '<td class="px-6 py-4 font-medium text-black whitespace-nowrap bg-cnfpt-blanc border border-blue-50 whitespace-pre-wrap font-bold">' + getReservationsText(salle.reservations) + '</td>';
 
 
+              if(salle.reservations.length <= 0){
+                salleElement.innerHTML += '<td class="px-6 py-4 font-medium text-black whitespace-nowrap bg-cnfpt-blanc border border-blue-50"></td>';
+              }
 
               Array.from(salle.reservations).forEach((reservation) => {
                 if (reservation.IdEtat === 3 && reservation.intervenants.length > 0 && reservation.intervenants[0].nom) {
