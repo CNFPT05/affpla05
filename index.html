@@ -121,6 +121,8 @@
                   salleElement.innerHTML += '<td class="px-6 py-4 font-medium text-black whitespace-nowrap bg-cnfpt-blanc border border-blue-50">' + reservation.intervenants.map(intervenant => intervenant.nom + ' ' + intervenant.prenom).join(', ') + '</td>';
                 } else if(reservation.intervenant) {
                   salleElement.innerHTML += '<td class="px-6 py-4 font-medium text-black whitespace-nowrap bg-cnfpt-blanc border border-blue-50">' + reservation.intervenant + '</td>';
+                } else{
+                  salleElement.innerHTML += '<td class="px-6 py-4 font-medium text-black whitespace-nowrap bg-cnfpt-blanc border border-blue-50"></td>';
                 }
               });
 
