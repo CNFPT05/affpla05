@@ -12,23 +12,26 @@
 
   <!-- tableau dans lequel on ajoutera les infos des salles -->
   <table class="w-full h-screen text-2xl text-left text-gray-500 dark:text-gray-400">
-    <thead class="text-white uppercase dark:text-gray-400 text-[rem] leading-8">
+    <thead class="text-white uppercase dark:text-gray-400 leading-8">
     <tr>
-      <th scope="col" class="px-6 py-3 bg-cnfpt-primary-1 border border-blue-50">Salle</th>
-      <th scope="col" class="px-6 py-3 bg-cnfpt-primary-1 border border-blue-50">Étage</th>
-      <th scope="col" class="px-6 py-3 bg-cnfpt-primary-1 border border-blue-50">Formation</th>
-      <th scope="col" class="px-6 py-3 bg-cnfpt-primary-1 border border-blue-50">Intervenant</th>
     </tr>
     </thead>
-    <tbody id="salles" class="text-[1.8rem] leading-8">
+    <tbody id="salles" class="leading-8">
     </tbody>
     <tfoot class="text-white dark:text-gray-400 text-2xl" style="height: 5%;">
         <tr>
-            <th colspan="4" class="px-6 py-3 bg-cnfpt-primary-1 w-full text-center">
-              <span class="text-cnfpt-secondary">WiFi : CNFPT_INVITES</span>
-              <img src="https://www.cnfpt.fr/assets/images/logo.svg" style="margin-left: 2.4em;  filter: brightness(0) invert(1);" class="inline-flex text-dark-50 float-left w-12">
-              <span id="pagination" class="text-dark-50 float-right"></span>
-            </th>
+          <th colspan="4" class="px-6 py-3 bg-cnfpt-primary-1 border border-white text-center align-middle">
+            <div class="flex items-center justify-center w-full relative">
+              <img src="https://www.cnfpt.fr/assets/images/logo.svg"
+          style="margin-left: 2.4em; filter: brightness(0) invert(1);"
+          class="inline-flex text-dark-50 w-16 mr-4">
+              <span id="data_date" class="mx-4 text-xs"></span>
+              <ul class="flex-1 flex justify-center items-center list-none m-0 p-0">
+                <li id="infos" class="text-cnfpt-secondary"></li>
+              </ul>
+              <span id="pagination" class="text-dark-50 text-white font-bold"></span>
+            </div>
+          </th>
         </tr>
     </tfoot>
   </table>
@@ -70,20 +73,171 @@
 
     // Fonction pour afficher les informations avec pagination
     function displayInformation(data) {
-      var centre = data[0];
+      var centre = data['data'][0];
+      var config = data['centre'];
+      var date = data['date'];
+      var data_date = data['data_date'];
+
+      // Afficher la date dans le pied de page
+      document.getElementById('data_date').textContent = "(Dernière synchronisation: " + data_date + ")";
+
+      // Font size mappings in JavaScript
+      var fontSizes = {
+        1: '1.2rem',
+        2: '1.4rem',
+        3: '1.6rem',
+        4: '1.8rem',
+        5: '2.0rem',
+        6: '2.2rem',
+        7: '2.4rem',
+        8: '2.6rem',
+        9: '2.8rem',
+        10: '3.0rem'
+      };
+      var fontSizesSecondary = {
+        1: '0.9rem',
+        2: '1.1rem',
+        3: '1.3rem',
+        4: '1.5rem',
+        5: '1.7rem',
+        6: '1.9rem',
+        7: '2.1rem',
+        8: '2.3rem',
+        9: '2.5rem',
+        10: '2.7rem'
+      };
+
+      // Déterminer la taille de police à utiliser selon la config
+      var fontSize = fontSizes[config.affpla_font_size] || '1.8rem';
+      var fontSizeSecondary = fontSizesSecondary[config.affpla_font_size] || '1.5rem';
+
+      // Appliquer la taille de police principale au tableau
+      document.querySelector('table').style.fontSize = fontSize;
+
+      // Appliquer la taille de police secondaire aux éléments nécessaires (exemple pour tbody)
+      document.getElementById('salles').style.fontSize = fontSizeSecondary;
+
+      // Gestion des paramètres de configuration
+      // Ajouter dynamiquement les colonnes selon la config
+      const theadRow = document.querySelector('thead tr');
+      // Supprimer les anciennes colonnes dynamiques si elles existent
+      Array.from(theadRow.querySelectorAll('.col-formation, .col-salle')).forEach(el => el.remove());
+
+      // Ajout colonne "Formation" si formation_is_active == 1
+      if (config.formation_is_active === 1) {
+        const thFormation = document.createElement('th');
+        thFormation.scope = "col";
+        thFormation.className = "px-6 py-3 bg-cnfpt-primary-1 border border-blue-50 col-formation";
+        thFormation.textContent = "Formation";
+        theadRow.insertBefore(thFormation, theadRow.firstChild);
+      }
+
+      // Ajout colonne "Salle" si salle_is_active == 1
+      if (config.salle_is_active === 1) {
+        const thSalle = document.createElement('th');
+        thSalle.scope = "col";
+        thSalle.className = "px-6 py-3 bg-cnfpt-primary-1 border border-blue-50 col-salle";
+        thSalle.textContent = "Salle";
+        // Si formation est active, insérer après formation, sinon en premier
+        if (config.formation_is_active === 1) {
+          theadRow.insertBefore(thSalle, theadRow.children[1]);
+        } else {
+          theadRow.insertBefore(thSalle, theadRow.firstChild);
+        }
+
+        // Ajout de la colonne Consignes si consignes_is_active == 1
+        if (config.consignes_is_active === 1) {
+          const thConsignes = document.createElement('th');
+          thConsignes.scope = "col";
+          thConsignes.className = "px-6 py-3 bg-cnfpt-primary-1 border border-blue-50";
+          thConsignes.textContent = "Consignes";
+          theadRow.appendChild(thConsignes);
+        }
+
+        // Ajout de la colonne Repas si heure_repas_is_active == 1
+        if (config.heure_repas_is_active === 1) {
+          const thRepas = document.createElement('th');
+          thRepas.scope = "col";
+          thRepas.className = "px-6 py-3 bg-cnfpt-primary-1 border border-blue-50";
+          thRepas.textContent = "Repas";
+          theadRow.appendChild(thRepas);
+        }
+      }
 
       var salles = centre.salles;
       var pageCourante = 0;
 
-      console.log(salles);
+      // Nouvelle fonction pour afficher le texte des réservations + intervenants si actif
+      function getReservationsTextWithIntervenants(reservations) {
+        let text = '';
+        reservations.forEach((reservation) => {
+          if (reservation['IdEtat'] === 3 && nowIsWithinReservationTime(reservation)) {
+        text += '<span class="uppercase" style="font-size:' + fontSize + ';">' + reservation['libelleReservation'] + '</span>';
+        if (reservation['codeSession']) {
+          text += '<span style="font-size:' + fontSize + ';">' + ' (' + reservation['codeSession'] + ')</span>';
+        }
+        if (hasOverlappingReservations(reservations, reservation)) {
+          text += ' | ' + getTimeRangeText(reservation);
+        }
+        // Ajout intervenants en dessous si actif
+        if (config.intervenant_is_active === 1) {
+          let intervenants = '';
+          if (reservation.intervenants && reservation.intervenants.length > 0 && reservation.intervenants[0].nom) {
+            intervenants = reservation.intervenants.map(intervenant => intervenant.nom + ' ' + intervenant.prenom).join(', ');
+          } else if (reservation.intervenant) {
+            intervenants = reservation.intervenant;
+          }
+          if (intervenants) {
+            text += '<br><span style="text-transform: capitalize !important; font-size:' + fontSizeSecondary + ';">' + intervenants + '</span>';
+          }
+        }
+        text += '<br>';
+          }
+        });
+        return text;
+      }
 
-      switchPlanning(salles, pageCourante);
+      // Si salle_sans_resa_is_active == 1, ne garder que les salles avec au moins une réservation
+      if (config.salle_sans_resa_is_active === 1) {
+        salles = salles.filter(salle => Array.isArray(salle.reservations) && salle.reservations.length > 0);
+      }
+
+      try {
+        if (config && config.infos) {
+          let infosArr = [];
+          if (typeof config.infos === "string") {
+        infosArr = JSON.parse(config.infos);
+          } else if (Array.isArray(config.infos)) {
+        infosArr = config.infos;
+          }
+
+          let infosElem = document.getElementById('infos');
+          if (infosArr.length <= 1) {
+        infosElem.innerHTML = infosArr.join('<br>');
+          } else {
+        let currentInfo = 0;
+        infosElem.innerHTML = infosArr[currentInfo];
+        infosElem.style.transition = "opacity 0.5s";
+
+        setInterval(() => {
+          infosElem.style.opacity = 0;
+          setTimeout(() => {
+            currentInfo = (currentInfo + 1) % infosArr.length;
+            infosElem.innerHTML = infosArr[currentInfo];
+            infosElem.style.opacity = 1;
+          }, 500);
+        }, 5000);
+          }
+        }
+      } catch (e) {
+        document.getElementById('infos').innerHTML = '';
+      }
 
       function switchPlanning(salles, pageCourante) {
-        let salleParPage = 8;
+        let salleParPage = 6;
 
-        if (salles.length > 8) {
-          salleParPage = Math.ceil(salles.length / 2);
+        if (salles.length > 6) {
+          salleParPage = Math.ceil(salles.length / 3);
         } else {
           salleParPage = salles.length;
         }
@@ -93,7 +247,7 @@
         if (salleParPage * nombrePage - salles.length != 0) {
           let nbSalleRestante = salleParPage * nombrePage - salles.length;
 
-          if ((salleParPage + nbSalleRestante) > 8) {
+          if ((salleParPage + nbSalleRestante) > 6) {
             salleParPage = salleParPage + nbSalleRestante;
             nombrePage = Math.ceil(salles.length / salleParPage);
           }
@@ -110,35 +264,69 @@
           Array.from(salles).forEach((salle, index) => {
             if (index >= prevRange && index < currRange) {
               var salleElement = document.createElement('tr');
-              salleElement.innerHTML = '<td class="px-6 py-4 font-bold font-medium text-black whitespace-nowrap bg-cnfpt-blanc border border-blue-50">' + salle.libelle + '</td>' +
-                '<td class="px-6 py-4 font-medium text-black font-bold whitespace-nowrap bg-cnfpt-blanc border border-blue-50">' + salle.etage + '</td>' +
-                '<td class="px-6 py-4 font-medium text-black whitespace-nowrap bg-cnfpt-blanc border border-blue-50 whitespace-pre-wrap font-bold">' + getReservationsText(salle.reservations) + '</td>';
+              let rowHtml = '';
 
-
-              if(salle.reservations.length <= 0){
-                salleElement.innerHTML += '<td class="px-6 py-4 font-medium text-black whitespace-nowrap bg-cnfpt-blanc border border-blue-50"></td>';
+              // Ajout colonne Formation si active
+              if (config.formation_is_active === 1) {
+                rowHtml += '<td class="px-6 py-4 font-bold text-black bg-cnfpt-blanc border border-blue-50">' + getReservationsTextWithIntervenants(salle.reservations) + '</td>';
               }
 
-              Array.from(salle.reservations).forEach((reservation) => {
-                if (reservation.IdEtat === 3 && reservation.intervenants.length > 0 && reservation.intervenants[0].nom) {
-                  salleElement.innerHTML += '<td class="px-6 py-4 font-medium text-black whitespace-nowrap bg-cnfpt-blanc border border-blue-50">' + reservation.intervenants.map(intervenant => intervenant.nom + ' ' + intervenant.prenom).join(', ') + '</td>';
-                } else if(reservation.intervenant) {
-                  salleElement.innerHTML += '<td class="px-6 py-4 font-medium text-black whitespace-nowrap bg-cnfpt-blanc border border-blue-50">' + reservation.intervenant + '</td>';
-                } else{
-                  salleElement.innerHTML += '<td class="px-6 py-4 font-medium text-black whitespace-nowrap bg-cnfpt-blanc border border-blue-50"></td>';
+              // Ajout colonne Salle si active
+              let salleColAdded = false;
+              if (config.salle_is_active === 1) {
+                rowHtml += '<td class="px-6 py-4 font-bold text-black whitespace-nowrap bg-cnfpt-blanc border border-blue-50" style="font-size:' + fontSize + ';">';
+                rowHtml += salle.libelle;
+                // Ajout étage en dessous du nom de la salle si etage_is_active == 1
+                if (config.etage_is_active === 1) {
+                  rowHtml += '<br><span style="font-size:' + fontSizeSecondary + ';">' + salle.etage;
+                  if (salle.batiment) {
+                    rowHtml += ' (' + salle.batiment + ')';
+                  }
+                  rowHtml += '</span>';
                 }
-              });
+                rowHtml += '</td>';
+                salleColAdded = true;
+              }
 
+              // Ajout colonne Consignes si consignes_is_active == 1 (entre Salle et Repas)
+              if (config.salle_is_active === 1 && config.consignes_is_active === 1) {
+                let consignesText = salle.consignes ? salle.consignes : '';
+                rowHtml += '<td class="px-6 py-4 font-medium text-black whitespace-nowrap bg-cnfpt-blanc border border-blue-50" style="font-size:' + fontSizeSecondary + ';">' + consignesText + '</td>';
+              }
+
+              // Ajout colonne Repas si heure_repas_is_active après la colonne Consignes
+              if (config.salle_is_active === 1 && config.heure_repas_is_active === 1) {
+                let repasText = '';
+                if (Array.isArray(salle.reservations)) {
+                  salle.reservations.forEach(reservation => {
+                    if (reservation.IdEtat === 3 && reservation.heureRepas) {
+                      repasText += reservation.heureRepas[date.split('-').reverse().join('-')] + '<br>';
+                    }
+                  });
+                }
+                rowHtml += '<td class="px-6 py-4 font-bold text-black whitespace-nowrap bg-cnfpt-blanc border border-blue-50" style="font-size:' + fontSizeSecondary + ';">' + repasText + '</td>';
+              }
+
+              // Colonne Étage (ancienne colonne, à afficher uniquement si salle_is_active n'est pas actif)
+              if (config.salle_is_active !== 1 && config.etage_is_active === 1) {
+                rowHtml += '<td class="px-6 py-4 font-medium text-black font-bold whitespace-nowrap bg-cnfpt-blanc border border-blue-50" style="font-size:' + fontSizeSecondary + ';">' + salle.etage + '</td>';
+              } else if (config.salle_is_active !== 1 && config.etage_is_active !== 1) {
+                rowHtml += '<td class="px-6 py-4 font-medium text-black font-bold whitespace-nowrap bg-cnfpt-blanc border border-blue-50" style="font-size:' + fontSizeSecondary + ';"></td>';
+              }
+
+              salleElement.innerHTML = rowHtml;
               document.getElementById('salles').appendChild(salleElement);
             }
           });
 
+          var now = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
           let pagination = document.getElementById('pagination');
           pagination.classList.add("position-absolute", "bottom-0", "end-0");
           pagination.style.paddingRight = "2.6em";
           pagination.style.paddingTop = "0.05em";
           pagination.style.paddingBottom = "0.1em";
-          pagination.innerHTML= "PAGE " + pageCourante + "/" + nombrePage;
+          pagination.style.fontSize = fontSizeSecondary;
+          pagination.innerHTML= now + " - PAGE " + pageCourante + "/" + nombrePage;
         };
 
         // Démarrer à la première page
@@ -151,9 +339,10 @@
           } else {
             setCurrentPage(pageCourante + 1);
           }
-        }, 9 * 1000);
+        }, config.timer_par_page * 1000);
       }
 
+      switchPlanning(salles, pageCourante);
     }
 
     function getReservationsText(reservations) {
